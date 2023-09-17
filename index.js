@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.port || 5000;
@@ -23,6 +23,19 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const demoServicesCollection = client.db("docHouseDB").collection("demoServices");
+        const doctorsCollection = client.db("docHouseDB").collection("doctorsInfo");
+        app.get('/doctors/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await doctorsCollection.findOne(query);
+            res.send(result);
+        })
+        app.get('/doctors', async (req, res) => {
+            const result = await doctorsCollection.find().toArray();
+            res.send(result);
+        })
+        // services API
         app.get('/demoServices/:name', async (req, res) => {
             const name = req.params.name;
             const query = { name: name }
