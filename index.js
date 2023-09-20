@@ -24,9 +24,15 @@ async function run() {
         await client.connect();
         const demoServicesCollection = client.db("docHouseDB").collection("demoServices");
         const doctorsCollection = client.db("docHouseDB").collection("doctorsInfo");
+        const reviewsCollection = client.db("docHouseDB").collection("reviews");
+        app.get('/reviews', async (req, res) => {
+            const result = await reviewsCollection.find({}).toArray();
+            res.send(result);
+        })
+        // doctorInfo related API
         app.get('/doctors/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
+            // console.log(id);
             const query = { _id: new ObjectId(id) }
             const result = await doctorsCollection.findOne(query);
             res.send(result);
