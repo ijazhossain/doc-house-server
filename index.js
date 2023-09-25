@@ -25,6 +25,29 @@ async function run() {
         const demoServicesCollection = client.db("docHouseDB").collection("demoServices");
         const doctorsCollection = client.db("docHouseDB").collection("doctorsInfo");
         const reviewsCollection = client.db("docHouseDB").collection("reviews");
+        const appointmentsCollection = client.db("docHouseDB").collection("appointment");
+        const bookingsCollection = client.db("docHouseDB").collection("bookings");
+        // appointment related API
+        app.post('/booking', async (req, res) => {
+            const newBooking = req.body;
+            console.log(newBooking);
+            const query = {
+                treatment: newBooking.treatment,
+                date: newBooking.date,
+                patient: newBooking.patient
+            }
+            const exists = await bookingsCollection.findOne(query);
+            if (exists) {
+                return res.send({ success: false, booking: exists })
+            }
+            const result = await bookingsCollection.insertOne(newBooking);
+            res.send({ success: true, result });
+        })
+        app.get('/appointments', async (req, res) => {
+            const result = await appointmentsCollection.find({}).toArray();
+            res.send(result);
+        })
+        // reviews related Api
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find({}).toArray();
             res.send(result);
