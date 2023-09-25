@@ -28,20 +28,32 @@ async function run() {
         const appointmentsCollection = client.db("docHouseDB").collection("appointment");
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
         // appointment related API
+        app.get('/available', async (req, res) => {
+            const date = req.query.date;
+            const query = { date: date };
+            const services = await appointmentsCollection.find().toArray();
+            const bookings = await bookingsCollection.find(query).toArray();
+            services.forEach(service => {
+                const bookedServices = bookings.filter(b => b.treatment === service.name);
+                // console.log('bookedServices', bookedServices);
+                const bookedSlot = bookedServices.map(s => s.slot);
+                // console.log('bookedSlot', bookedSlot);
+                const available = service.slots.filter(s => !bookedSlot.includes(s));
+                service.slots = available;
+            })
+            res.send(services)
+        })
         app.post('/booking', async (req, res) => {
-            const newBooking = req.body;
-            console.log(newBooking);
-            const query = {
-                treatment: newBooking.treatment,
-                date: newBooking.date,
-                patient: newBooking.patient
-            }
+            const booking = req.body;
+            // console.log(booking);
+            const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
             const exists = await bookingsCollection.findOne(query);
+            // console.log('exists', exists);
             if (exists) {
                 return res.send({ success: false, booking: exists })
             }
-            const result = await bookingsCollection.insertOne(newBooking);
-            res.send({ success: true, result });
+            const result = await bookingsCollection.insertOne(booking);
+            return res.send({ success: true, result });
         })
         app.get('/appointments', async (req, res) => {
             const result = await appointmentsCollection.find({}).toArray();
