@@ -28,6 +28,13 @@ async function run() {
         const appointmentsCollection = client.db("docHouseDB").collection("appointment");
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
         // appointment related API
+        app.get('/patient-appointments', async (req, res) => {
+            const patient = req.query.email;
+            console.log(patient);
+            const query = { patient: patient };
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result);
+        })
         app.get('/available', async (req, res) => {
             const date = req.query.date;
             const query = { date: date };
