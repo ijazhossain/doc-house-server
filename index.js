@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+var jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
@@ -27,10 +28,24 @@ async function run() {
         const reviewsCollection = client.db("docHouseDB").collection("reviews");
         const appointmentsCollection = client.db("docHouseDB").collection("appointment");
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
+        const usersCollection = client.db("docHouseDB").collection("user");
+        // user related API
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc, option);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token });
+        })
         // appointment related API
         app.get('/patient-appointments', async (req, res) => {
             const patient = req.query.email;
-            console.log(patient);
+            // console.log(patient);
             const query = { patient: patient };
             const result = await bookingsCollection.find(query).toArray();
             res.send(result);
