@@ -8,6 +8,21 @@ const port = process.env.port || 5000;
 app.use(cors())
 app.use(express.json())
 
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    // console.log(authorization);
+    if (!authorization) {
+        return res.status(401).send({ error: 'true', message: 'unauthorized access 1' });
+    }
+    const token = authorization.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ error: 'true', message: 'unauthorized access 2' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.zrkqnje.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -43,9 +58,13 @@ async function run() {
             res.send({ result, token });
         })
         // appointment related API
-        app.get('/patient-appointments', async (req, res) => {
+        app.get('/patient-appointments', verifyJWT, async (req, res) => {
             const patient = req.query.email;
             // console.log(patient);
+            const decodedEmail = req.decoded.email;
+            if (patient !== decodedEmail) {
+                return res.status(403).send({ error: 'true', message: 'forbidden access' })
+            }
             const query = { patient: patient };
             const result = await bookingsCollection.find(query).toArray();
             res.send(result);
