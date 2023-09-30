@@ -45,6 +45,33 @@ async function run() {
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
         const usersCollection = client.db("docHouseDB").collection("user");
         // user related API
+        app.get('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            if (req.decoded.email !== email) {
+                return res.status(403).send({ error: true, admin: 'false' })
+            }
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            const result = { admin: user.role === 'admin' };
+            res.send(result);
+        })
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ error: true, admin: "false" })
+            }
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+        app.get('/users', verifyJWT, async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
