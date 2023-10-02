@@ -39,7 +39,8 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const demoServicesCollection = client.db("docHouseDB").collection("demoServices");
-        const doctorsCollection = client.db("docHouseDB").collection("doctorsInfo");
+        const doctorsInfoCollection = client.db("docHouseDB").collection("doctorsInfo");
+        const doctorsCollection = client.db("docHouseDB").collection("doctors");
         const reviewsCollection = client.db("docHouseDB").collection("reviews");
         const appointmentsCollection = client.db("docHouseDB").collection("appointment");
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
@@ -127,6 +128,10 @@ async function run() {
             const result = await appointmentsCollection.find({}).toArray();
             res.send(result);
         })
+        app.get('/appointment', async (req, res) => {
+            const result = await appointmentsCollection.find({}).project({ name: 1 }).toArray();
+            res.send(result);
+        })
         // reviews related Api
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find({}).toArray();
@@ -137,11 +142,17 @@ async function run() {
             const id = req.params.id;
             // console.log(id);
             const query = { _id: new ObjectId(id) }
-            const result = await doctorsCollection.findOne(query);
+            const result = await doctorsInfoCollection.findOne(query);
+            res.send(result);
+        })
+        app.post('/doctor', verifyJWT, async (req, res) => {
+            const newDoc = req.body;
+            console.log(newDoc);
+            const result = await doctorsCollection.insertOne(newDoc);
             res.send(result);
         })
         app.get('/doctors', async (req, res) => {
-            const result = await doctorsCollection.find().toArray();
+            const result = await doctorsInfoCollection.find().toArray();
             res.send(result);
         })
         // services API
