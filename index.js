@@ -45,6 +45,16 @@ async function run() {
         const appointmentsCollection = client.db("docHouseDB").collection("appointment");
         const bookingsCollection = client.db("docHouseDB").collection("bookings");
         const usersCollection = client.db("docHouseDB").collection("user");
+        // middleware to verify admin 
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            if (user.role !== 'admin') {
+                return res.status(403).send({ error: true, message: 'Forbidden access' })
+            }
+            next()
+        }
         // user related API
         app.get('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
@@ -56,13 +66,9 @@ async function run() {
             const result = { admin: user.role === 'admin' };
             res.send(result);
         })
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
-            const email = req.params.email;
-            const decodedEmail = req.decoded.email;
-            if (email !== decodedEmail) {
-                return res.status(403).send({ error: true, admin: "false" })
-            }
-            const filter = { email: email };
+        app.put('/user/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: { role: 'admin' }
             }
@@ -145,7 +151,7 @@ async function run() {
             const result = await doctorsInfoCollection.findOne(query);
             res.send(result);
         })
-        app.post('/doctor', verifyJWT, async (req, res) => {
+        app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const newDoc = req.body;
             console.log(newDoc);
             const result = await doctorsCollection.insertOne(newDoc);
