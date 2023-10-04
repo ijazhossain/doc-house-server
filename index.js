@@ -161,6 +161,17 @@ async function run() {
             const result = await doctorsInfoCollection.find().toArray();
             res.send(result);
         })
+        app.get('/doctor', async (req, res) => {
+            const result = await doctorsCollection.find().toArray();
+            res.send(result);
+        })
+        app.delete('/doctor/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await doctorsCollection.deleteOne(query)
+            res.send(result);
+        })
         // services API
         app.get('/demoServices/:name', async (req, res) => {
             const name = req.params.name;
